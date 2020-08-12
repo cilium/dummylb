@@ -1,8 +1,8 @@
 FROM golang:1.14
 
-WORKDIR /dummy-lb
+WORKDIR /dummylb
 COPY . .
 
 RUN go build main.go
 
-CMD ["/dummy-lb/main"]
+CMD ["/dummylb/main"]
