@@ -17,8 +17,8 @@ spec:
       hostNetwork: true
       containers:
       - name: dummylb
-        image: docker.io/cilium/dummylb:0.0.1
-        imagePullPolicy: IfNotPresent
+        image: docker.io/cilium/dummylb:0.0.2
+        imagePullPolicy: Never
       serviceAccountName: dummylb
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -36,6 +36,12 @@ rules:
   - get
   - list
   - watch
+  - update
+- apiGroups:
+  - ''
+  resources:
+  - services/status
+  verbs:
   - update
 ---
 apiVersion: v1

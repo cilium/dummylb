@@ -32,6 +32,15 @@ func getConfig() *rest.Config {
 	return config
 }
 
+func maybeSetLoadBalancerIP(clientset *kubernetes.Clientset, svc *v1.Service) {
+	ip := svc.Spec.LoadBalancerIP
+	if svc.Spec.Type == "LoadBalancer" && ip != "" {
+		fmt.Printf("Setting %s to %s/%s\n", ip, svc.Namespace, svc.Name)
+		svc.Status.LoadBalancer.Ingress = []v1.LoadBalancerIngress{{IP: ip}}
+		clientset.CoreV1().Services(svc.Namespace).UpdateStatus(context.TODO(), svc, metav1.UpdateOptions{})
+	}
+}
+
 func main() {
 	config := getConfig()
 	clientset, err := kubernetes.NewForConfig(config)
@@ -41,22 +50,10 @@ func main() {
 
 	handlers := cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			svc := obj.(*v1.Service)
-			if svc.Spec.Type == "LoadBalancer" {
-				ip := svc.Spec.LoadBalancerIP
-				fmt.Printf("Setting %s to %s/%s\n", ip, svc.Namespace, svc.Name)
-				svc.Status.LoadBalancer.Ingress = []v1.LoadBalancerIngress{{IP: ip}}
-				clientset.CoreV1().Services(svc.Namespace).UpdateStatus(context.TODO(), svc, metav1.UpdateOptions{})
-			}
+			maybeSetLoadBalancerIP(clientset, obj.(*v1.Service))
 		},
 		UpdateFunc: func(old interface{}, new interface{}) {
-			svc := new.(*v1.Service)
-			if svc.Spec.Type == "LoadBalancer" {
-				ip := svc.Spec.LoadBalancerIP
-				fmt.Printf("Setting %s to %s/%s\n", ip, svc.Namespace, svc.Name)
-				svc.Status.LoadBalancer.Ingress = []v1.LoadBalancerIngress{{IP: ip}}
-				clientset.CoreV1().Services(svc.Namespace).UpdateStatus(context.TODO(), svc, metav1.UpdateOptions{})
-			}
+			maybeSetLoadBalancerIP(clientset, new.(*v1.Service))
 		},
 		DeleteFunc: func(obj interface{}) {
 		},
