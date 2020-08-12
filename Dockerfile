@@ -1,8 +1,6 @@
-FROM golang:1.14
+FROM alpine:3.7
 
-WORKDIR /dummylb
-COPY . .
+WORKDIR /
+COPY dummylb .
 
-RUN go build main.go
-
-CMD ["/dummylb/main"]
+CMD ["/dummylb"]
